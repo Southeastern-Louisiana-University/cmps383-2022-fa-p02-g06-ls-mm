@@ -23,7 +23,7 @@ var summaries = new[]
 
 app.MapGet("/weatherforecast", () =>
 {
-    throw new Exception("remove me");
+    
     var forecast = Enumerable.Range(1, 5).Select(index =>
         new WeatherForecast
         (
@@ -35,6 +35,17 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
+
+app.MapGet("/weatherforecast/{id}", (int id) =>
+ {
+     return new WeatherForecast[id];
+ });
+
+
+
+
+
+
 
 app.Run();
 
