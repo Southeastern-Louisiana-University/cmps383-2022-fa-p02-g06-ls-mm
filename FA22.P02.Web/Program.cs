@@ -25,19 +25,19 @@ app.MapGet("/api/products", ([FromServices] ProductRepository repo) =>
      return repo.GetAll();
  });
 
-app.MapGet("/api/customers/{id}", ([FromServices] ProductRepository repo, Guid id) =>
+app.MapGet("/api/products/{id}", ([FromServices] ProductRepository repo, int id) =>
 {
     var product = repo.GetById(id);
     return product is not null ? Results.Ok(product) : Results.NotFound(404);
 });
 
-app.MapPost("/api/customers", ([FromServices] ProductRepository repo, Product product) =>
+app.MapPost("/api/products", ([FromServices] ProductRepository repo, Product product) =>
 {
     repo.Create(product);
     return Results.Created($"api/product/{product.Id}", product);
 });
 
-app.MapPut("/customers/{id}", ([FromServices] ProductRepository repo, Guid id, Product updatedProduct) =>
+app.MapPut("/products/{id}", ([FromServices] ProductRepository repo, int id, Product updatedProduct) =>
 {
     var product = repo.GetById(id);
     if (product is null)
@@ -49,7 +49,7 @@ app.MapPut("/customers/{id}", ([FromServices] ProductRepository repo, Guid id, P
     return Results.Ok(updatedProduct);
 });
 
-app.MapDelete("/customers/{id}", ([FromServices] ProductRepository repo, Guid id) =>
+app.MapDelete("/products/{id}", ([FromServices] ProductRepository repo, int id) =>
     {
         repo.Delete(id);
         return Results.Ok();
@@ -58,7 +58,7 @@ app.MapDelete("/customers/{id}", ([FromServices] ProductRepository repo, Guid id
 
     app.Run();
 
-record Product(Guid Id, 
+record Product(int Id, 
     string? Name, 
     string? Description, 
     decimal Price);
@@ -71,7 +71,7 @@ record Product(Guid Id,
 // Hi 383 - this is added so we can test our web project automatically. More on that later
  class ProductRepository
 {
-    private readonly Dictionary<Guid, Product> _products = new();
+    private readonly Dictionary<int, Product> _products = new();
 
     public void Create(Product product)
     {
@@ -82,7 +82,7 @@ record Product(Guid Id,
         _products[product.Id] = product;
     }
 
-    public Product GetById(Guid id)
+    public Product GetById(int id)
     {
         return _products[id];
     }
@@ -102,7 +102,7 @@ record Product(Guid Id,
 
         _products[product.Id] = product;
     }
-    public void Delete(Guid id)
+    public void Delete(int id)
     {
         _products.Remove(id);
     }
