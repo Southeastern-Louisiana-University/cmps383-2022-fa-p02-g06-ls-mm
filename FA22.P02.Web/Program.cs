@@ -44,6 +44,7 @@ app.MapPut("/products/{id}", ([FromServices] ProductRepository repo, int id, Pro
     {
         return Results.NotFound();
     }
+    
 
     repo.Update(updatedProduct);
     return Results.Ok(updatedProduct);
@@ -69,7 +70,8 @@ record Product(int Id,
 
 //see: https://docs.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-6.0
 // Hi 383 - this is added so we can test our web project automatically. More on that later
- class ProductRepository
+public partial class Program { }
+class ProductRepository
 {
     private readonly Dictionary<int, Product> _products = new();
 
