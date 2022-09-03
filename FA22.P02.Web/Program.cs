@@ -1,5 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+
+using FA22.P02.Web.Features.Products;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSingleton<ProductRepository>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -18,51 +19,118 @@ if (app.Environment.IsDevelopment())
 }
 app.UseHttpsRedirection();
 
+var currentId = 1;
+var products = new List<ProductDto>
+{
+    new ProductDto
+    {
+        Id = currentId++,
+        Name = "Xbox1",
+        Description = "Newest Xbox Console",
+        Price = 699.99m,
+    },
+    new ProductDto
+    {
+        Id = currentId++,
+        Name = "PS5",
+        Description = "Sony's newest PlayStation",
+        Price = 599.99m,
+    },
+    new ProductDto
+    {
+        Id = currentId++,
+        Name = "Xbox 360",
+        Description = "Good Condition, 1 previous owner",
+        Price = 199.99m
+    }
+};
 
 
-app.MapGet("/api/products", ([FromServices] ProductRepository repo) =>
+
+app.MapGet("/api/products", () =>
  {
-     return repo.GetAll();
- });
+     return products;
+ })
+    .Produces(200, typeof(ProductDto[]));
 
-app.MapGet("/api/products/{id}", ([FromServices] ProductRepository repo, int id) =>
-{
-    var product = repo.GetById(id);
-    return product is not null ? Results.Ok(product) : Results.NotFound(404);
-});
 
-app.MapPost("/api/products", ([FromServices] ProductRepository repo, Product product) =>
+app.MapGet("/api/products/{id}", ( int id) =>
 {
-    repo.Create(product);
-    return Results.Created($"api/product/{product.Id}", product);
-});
-
-app.MapPut("/products/{id}", ([FromServices] ProductRepository repo, int id, Product updatedProduct) =>
-{
-    var product = repo.GetById(id);
-    if (product is null)
+    var result = products.FirstOrDefault(x => x.Id == id);
+    if (result == null)
     {
         return Results.NotFound();
     }
-    
 
-    repo.Update(updatedProduct);
-    return Results.Ok(updatedProduct);
-});
+    return Results.Ok(result);
+})
+    .WithName("GetProductById")
+    .Produces(404)
+    .Produces(200, typeof(ProductDto));
 
-app.MapDelete("/products/{id}", ([FromServices] ProductRepository repo, int id) =>
+app.MapPost("/api/products", (ProductDto product) =>
+{
+    if (string.IsNullOrWhiteSpace(product.Name) ||
+            product.Name.Length > 120 ||
+            product.Price <= 0 ||
+            string.IsNullOrWhiteSpace(product.Description))
     {
-        repo.Delete(id);
+        return Results.BadRequest();
+    }
+
+    product.Id = currentId++;
+    products.Add(product);
+    return Results.CreatedAtRoute("GetProductById", new { id = product.Id }, product);
+})
+    .Produces(400)
+    .Produces(201, typeof(ProductDto));
+
+app.MapPut("api/products/{id}", ( int id, ProductDto product) =>
+{
+    if (string.IsNullOrWhiteSpace(product.Name) ||
+           product.Name.Length > 120 ||
+           product.Price <= 0 ||
+           string.IsNullOrWhiteSpace(product.Description))
+    {
+        return Results.BadRequest();
+    }
+
+    var current = products.FirstOrDefault(x => x.Id == id);
+    if (current == null)
+    {
+        return Results.NotFound();
+    }
+
+    current.Name = product.Name;
+    current.Name = product.Name;
+    current.Price = product.Price;
+    current.Description = product.Description;
+
+    return Results.Ok(current);
+})
+    .Produces(400)
+    .Produces(404)
+    .Produces(200, typeof(ProductDto));
+
+app.MapDelete("api/products/{id}", (int id) =>
+    {
+        var current = products.FirstOrDefault(x => x.Id == id);
+        if (current == null)
+        {
+            return Results.NotFound();
+        }
+
+        products.Remove(current);
+
         return Results.Ok();
- });
+    })
+    .Produces(400)
+    .Produces(404)
+    .Produces(200, typeof(ProductDto));
 
 
-    app.Run();
+app.Run();
 
-record Product(int Id, 
-    string? Name, 
-    string? Description, 
-    decimal Price);
 
 
 
@@ -71,7 +139,7 @@ record Product(int Id,
 //see: https://docs.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-6.0
 // Hi 383 - this is added so we can test our web project automatically. More on that later
 public partial class Program { }
-class ProductRepository
+/*class ProductRepository
 {
     private readonly Dictionary<int, Product> _products = new();
 
@@ -109,4 +177,4 @@ class ProductRepository
         _products.Remove(id);
     }
 }
-
+*/
